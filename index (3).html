@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toko Online Sederhana</title>
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      background: #f5f8ff;
+      color: #222;
+    }
+    header {
+      background: #007bff;
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { margin: 0; }
+    nav button {
+      background: white;
+      color: #007bff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    nav button:hover { background: #e5e5e5; }
+
+    main { padding: 20px; }
+    h2 { text-align: center; color: #007bff; }
+
+    .product-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .product {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 15px;
+      text-align: center;
+    }
+
+    .product img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    button {
+      background: #007bff;
+      border: none;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover { background: #005fcc; }
+
+    /* Tampilan Keranjang & Pembayaran */
+    #cart-section, #payment-section { display: none; }
+    #cart-items {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .payment {
+      max-width: 400px;
+      margin: auto;
+      text-align: center;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
+
+    select {
+      width: 100%;
+      padding: 8px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    #confirmation {
+      color: green;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #007bff;
+      color: white;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>TokoOnlineKu</h1>
+    <nav>
+      <button onclick="showSection('dashboard')">🏠 Dashboard</button>
+      <button onclick="showSection('cart')">🛒 Keranjang</button>
+      <button onclick="showSection('payment')">💳 Pembayaran</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- DASHBOARD PRODUK -->
+    <section id="dashboard-section">
+      <h2>Daftar Produk</h2>
+      <div class="product-container" id="product-list"></div>
+    </section>
+
+    <!-- KERANJANG -->
+    <section id="cart-section">
+      <h2>Keranjang Belanja</h2>
+      <div id="cart-items"></div>
+      <h3 id="total"></h3>
+      <button onclick="showSection('payment')">Lanjut ke Pembayaran</button>
+    </section>
+
+    <!-- PEMBAYARAN -->
+    <section id="payment-section" class="payment">
+      <h2>Pembayaran</h2>
+      <p>Pilih Metode Pembayaran:</p>
+      <select id="payment-method">
+        <option value="dana">DANA</option>
+        <option value="ovo">OVO</option>
+        <option value="gopay">GoPay</option>
+        <option value="transfer">Transfer Bank</option>
+      </select>
+      <button id="pay-btn">Bayar Sekarang</button>
+      <p id="confirmation"></p>
+    </section>
+  </main>
+
+  <footer>
+    © 2025 TokoOnlineKu | Dibuat dengan 💙
+  </footer>
+
+  <script>
+    // === DATA PRODUK ===
+    const products = [
+      { id: 1, name: "Kaos Polos", price: 50000, img: "https://via.placeholder.com/200x150?text=Kaos" },
+      { id: 2, name: "Sepatu Sneakers", price: 250000, img: "https://via.placeholder.com/200x150?text=Sneakers" },
+      { id: 3, name: "Topi Keren", price: 75000, img: "https://via.placeholder.com/200x150?text=Topi" },
+      { id: 4, name: "Tas Ransel", price: 150000, img: "https://via.placeholder.com/200x150?text=Tas" },
+      { id: 5, name: "Jam Tangan", price: 200000, img: "https://via.placeholder.com/200x150?text=Jam" },
+    ];
+
+    // === VARIABEL KERANJANG ===
+    let cart = [];
+
+    // === TAMPILKAN PRODUK ===
+    const productList = document.getElementById("product-list");
+    products.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "product";
+      div.innerHTML = `
+        <img src="${p.img}" alt="${p.name}">
+        <h3>${p.name}</h3>
+        <p>Rp ${p.price.toLocaleString()}</p>
+        <button onclick="addToCart(${p.id})">Tambah ke Keranjang</button>
+      `;
+      productList.appendChild(div);
+    });
+
+    // === FUNGSI TAMBAH KE KERANJANG ===
+    function addToCart(id) {
+      const product = products.find(p => p.id === id);
+      const existing = cart.find(item => item.id === id);
+      if (existing) existing.qty += 1;
+      else cart.push({ ...product, qty: 1 });
+      alert(`${product.name} ditambahkan ke keranjang!`);
+      renderCart();
+    }
+
+    // === RENDER KERANJANG ===
+    function renderCart() {
+      const container = document.getElementById("cart-items");
+      container.innerHTML = "";
+      let total = 0;
+      if (cart.length === 0) {
+        container.innerHTML = "<p>Keranjang masih kosong.</p>";
+      } else {
+        cart.forEach((item, index) => {
+          total += item.price * item.qty;
+          const div = document.createElement("div");
+          div.className = "cart-item";
+          div.innerHTML = `
+            <span>${item.name} (x${item.qty})</span>
+            <span>Rp ${(item.price * item.qty).toLocaleString()}</span>
+            <button onclick="removeItem(${index})">❌</button>
+          `;
+          container.appendChild(div);
+        });
+      }
+      document.getElementById("total").textContent = `Total: Rp ${total.toLocaleString()}`;
+    }
+
+    // === HAPUS ITEM ===
+    function removeItem(index) {
+      cart.splice(index, 1);
+      renderCart();
+    }
+
+    // === PEMBAYARAN ===
+    document.getElementById("pay-btn").addEventListener("click", () => {
+      if (cart.length === 0) {
+        alert("Keranjang masih kosong!");
+        return;
+      }
+      const method = document.getElementById("payment-method").value;
+      document.getElementById("confirmation").textContent =
+        `Pembayaran berhasil menggunakan ${method.toUpperCase()}! Terima kasih telah berbelanja 😊`;
+      cart = []; // kosongkan keranjang
+      renderCart();
+    });
+
+    // === GANTI HALAMAN (SEKSI) ===
+    function showSection(name) {
+      document.getElementById("dashboard-section").style.display = "none";
+      document.getElementById("cart-section").style.display = "none";
+      document.getElementById("payment-section").style.display = "none";
+
+      if (name === "dashboard") document.getElementById("dashboard-section").style.display = "block";
+      if (name === "cart") document.getElementById("cart-section").style.display = "block";
+      if (name === "payment") document.getElementById("payment-section").style.display = "block";
+
+      if (name === "cart") renderCart();
+    }
+  </script>
+</body>
+</html>
